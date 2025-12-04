@@ -21,9 +21,6 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from client
-app.use(express.static(path.join(__dirname, '../client')));
-
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -38,11 +35,6 @@ app.use('/api/articles', articleRoutes);
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
-});
-
-// Serve index.html for all other routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
 // Initialize database and start server
