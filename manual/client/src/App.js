@@ -16,22 +16,34 @@ function App() {
     // Check if user is already logged in
     const savedToken = localStorage.getItem('token');
     if (savedToken) {
-      setToken(savedToken);
-      // Try to load articles to verify token
-      fetchArticles(savedToken);
+      verifyTokenAndRestoreUser(savedToken);
     }
   }, []);
 
-  const fetchArticles = async (authToken) => {
+  const verifyTokenAndRestoreUser = async (authToken) => {
     try {
-      const response = await fetch(`${API_URL}/articles`);
+      const response = await fetch(`${API_URL}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      
       if (response.ok) {
-        // Token is valid, user is logged in
-        // We'll get user info from login/register
+        const data = await response.json();
+        setUser(data.user);
+        setToken(authToken);
         setIsLoggedIn(true);
+      } else {
+        // Token is invalid or expired
+        localStorage.removeItem('token');
+        setToken(null);
+        setIsLoggedIn(false);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      localStorage.removeItem('token');
+      setToken(null);
+      setIsLoggedIn(false);
     }
   };
 

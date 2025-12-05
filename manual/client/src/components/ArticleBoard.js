@@ -75,7 +75,7 @@ function ArticleBoard({ user, token, onLogout }) {
   return (
     <div>
       <h1>Article Share</h1>
-      <p>Logged in as: <strong>{user?.username}</strong></p>
+      <p>Logged in as: <strong>{user?.username}</strong> {user?.isAdmin && <span>(Admin)</span>}</p>
       <button onClick={onLogout}>Logout</button>
 
       <h2>Post Article</h2>

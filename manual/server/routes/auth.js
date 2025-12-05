@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { getDb } = require('../database/db');
-const { JWT_SECRET } = require('../middleware/auth');
+const { JWT_SECRET, authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -49,7 +49,11 @@ router.post('/register', [
           res.status(201).json({
             message: 'User created successfully',
             token,
-            user: { id: this.lastID, username }
+            user: { 
+              id: this.lastID, 
+              username,
+              isAdmin: false // New users are not admin
+            }
           });
         }
       );
@@ -96,6 +100,31 @@ router.post('/login', [
 
       res.json({
         token,
+        user: {
+          id: row.id,
+          username: row.username,
+          isAdmin: row.is_admin === 1
+        }
+      });
+    }
+  );
+});
+
+// Get current user info (verify token)
+router.get('/me', authenticateToken, (req, res) => {
+  const db = getDb();
+  
+  db.get('SELECT id, username, is_admin FROM users WHERE id = ?', 
+    [req.user.userId], 
+    (err, row) => {
+      if (err) {
+        return res.status(500).json({ error: 'Database error' });
+      }
+      if (!row) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      res.json({
         user: {
           id: row.id,
           username: row.username,

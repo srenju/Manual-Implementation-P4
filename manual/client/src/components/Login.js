@@ -22,7 +22,12 @@ function Login({ onLogin, onSwitchToRegister }) {
       if (response.ok) {
         onLogin(data.user, data.token);
       } else {
-        setError(data.error || 'Login failed');
+        // Handle validation errors
+        if (data.errors && Array.isArray(data.errors)) {
+          setError(data.errors.map(e => e.msg || e).join(', '));
+        } else {
+          setError(data.error || 'Login failed');
+        }
       }
     } catch (error) {
       setError('Connection error');
