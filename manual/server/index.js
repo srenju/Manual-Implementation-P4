@@ -10,7 +10,7 @@ const articleRoutes = require('./routes/articles');
 const { initDatabase } = require('./database/db');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Security middleware
 app.use(helmet());

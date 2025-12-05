@@ -4,7 +4,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import ArticleBoard from './components/ArticleBoard';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5001/api';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
