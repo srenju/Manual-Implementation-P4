@@ -188,6 +188,7 @@
   transition: all 0.3s ease;
   background: #fff;
   font-family: inherit;
+  color: #000;
 }
 
 .post-input:focus {
