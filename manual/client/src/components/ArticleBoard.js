@@ -5,6 +5,9 @@ const API_URL = 'http://localhost:5001/api';
 function ArticleBoard({ user, token, onLogout }) {
   const [articles, setArticles] = useState([]);
   const [articleUrl, setArticleUrl] = useState('');
+  const [isPosting, setIsPosting] = useState(false);
+  const [postError, setPostError] = useState('');
+  const [postSuccess, setPostSuccess] = useState('');
 
   useEffect(() => {
     loadArticles();
@@ -20,9 +23,37 @@ function ArticleBoard({ user, token, onLogout }) {
     }
   };
 
+  const validateUrl = (url) => {
+    try {
+      // Ensure URL has a protocol
+      let urlToValidate = url.trim();
+      if (!urlToValidate.match(/^https?:\/\//i)) {
+        urlToValidate = 'https://' + urlToValidate;
+      }
+      new URL(urlToValidate);
+      return urlToValidate;
+    } catch (e) {
+      return null;
+    }
+  };
+
   const handlePostArticle = async (e) => {
     e.preventDefault();
-    if (!articleUrl) return;
+    setPostError('');
+    setPostSuccess('');
+    
+    if (!articleUrl.trim()) {
+      setPostError('Please enter a URL');
+      return;
+    }
+
+    const validatedUrl = validateUrl(articleUrl);
+    if (!validatedUrl) {
+      setPostError('Please enter a valid URL (e.g., https://example.com)');
+      return;
+    }
+
+    setIsPosting(true);
 
     try {
       const response = await fetch(`${API_URL}/articles`, {
@@ -31,18 +62,28 @@ function ArticleBoard({ user, token, onLogout }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ url: articleUrl })
+        body: JSON.stringify({ url: validatedUrl })
       });
 
       const data = await response.json();
       if (response.ok) {
         setArticleUrl('');
+        setPostSuccess('Article posted successfully!');
         loadArticles();
+        // Clear success message after 3 seconds
+        setTimeout(() => setPostSuccess(''), 3000);
       } else {
-        alert(data.error || 'Failed to post article');
+        // Handle validation errors
+        if (data.errors && Array.isArray(data.errors)) {
+          setPostError(data.errors.map(err => err.msg || err.message).join(', '));
+        } else {
+          setPostError(data.error || 'Failed to post article');
+        }
       }
     } catch (error) {
-      alert('Connection error');
+      setPostError('Connection error. Please check if the server is running.');
+    } finally {
+      setIsPosting(false);
     }
   };
 
@@ -82,11 +123,20 @@ function ArticleBoard({ user, token, onLogout }) {
       <form onSubmit={handlePostArticle}>
         <input
           type="text"
-          placeholder="Article URL"
+          placeholder="Article URL (e.g., https://example.com/article)"
           value={articleUrl}
-          onChange={(e) => setArticleUrl(e.target.value)}
+          onChange={(e) => {
+            setArticleUrl(e.target.value);
+            setPostError('');
+            setPostSuccess('');
+          }}
+          disabled={isPosting}
         />
-        <button type="submit">Post Article</button>
+        {postError && <div className="error">{postError}</div>}
+        {postSuccess && <div className="success">{postSuccess}</div>}
+        <button type="submit" disabled={isPosting || !articleUrl.trim()}>
+          {isPosting ? 'Posting...' : 'Post Article'}
+        </button>
       </form>
 
       <h2>Articles</h2>

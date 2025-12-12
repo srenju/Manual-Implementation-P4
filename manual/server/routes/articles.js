@@ -23,7 +23,14 @@ router.get('/', (req, res) => {
 
 // Create article (requires authentication)
 router.post('/', authenticateToken, [
-  body('url').isURL().withMessage('Valid URL is required')
+  body('url')
+    .trim()
+    .notEmpty().withMessage('URL is required')
+    .isURL({
+      protocols: ['http', 'https'],
+      require_protocol: true,
+      require_valid_protocol: true
+    }).withMessage('Please provide a valid URL with http:// or https://')
 ], (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -33,16 +40,20 @@ router.post('/', authenticateToken, [
   const { url, title } = req.body;
   const db = getDb();
 
+  // Normalize URL (trim and ensure proper format)
+  const normalizedUrl = url.trim();
+
   db.run('INSERT INTO articles (user_id, url, title) VALUES (?, ?, ?)',
-    [req.user.userId, url, title || null],
+    [req.user.userId, normalizedUrl, title || null],
     function(err) {
       if (err) {
-        return res.status(500).json({ error: 'Failed to create article' });
+        console.error('Database error creating article:', err);
+        return res.status(500).json({ error: 'Failed to create article. Please try again.' });
       }
       res.status(201).json({
         id: this.lastID,
-        url,
-        title,
+        url: normalizedUrl,
+        title: title || null,
         message: 'Article posted successfully'
       });
     }
