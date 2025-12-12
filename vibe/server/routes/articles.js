@@ -23,14 +23,20 @@ router.get('/', (req, res) => {
 
 // Create article (requires authentication)
 router.post('/', authenticateToken, [
-  body('url').isURL().withMessage('Valid URL is required')
+  body('url')
+    .notEmpty().withMessage('Article text is required')
+    .trim()
 ], (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { url, title } = req.body;
+  let { url, title } = req.body;
+  
+  // Just trim the text - no URL formatting needed
+  url = url.trim();
+  
   const db = getDb();
 
   db.run('INSERT INTO articles (user_id, url, title) VALUES (?, ?, ?)',

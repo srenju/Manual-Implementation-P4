@@ -42,7 +42,7 @@ function ArticleBoard({ user, token, onLogout }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ url: articleUrl })
+        body: JSON.stringify({ url: articleUrl.trim() })
       });
 
       const data = await response.json();
@@ -50,7 +50,12 @@ function ArticleBoard({ user, token, onLogout }) {
         setArticleUrl('');
         loadArticles();
       } else {
-        setError(data.error || 'Failed to post article');
+        // Handle validation errors
+        if (data.errors && Array.isArray(data.errors)) {
+          setError(data.errors.map(e => e.msg || e).join(', '));
+        } else {
+          setError(data.error || 'Failed to post article');
+        }
       }
     } catch (error) {
       setError('Connection error');
@@ -128,7 +133,7 @@ function ArticleBoard({ user, token, onLogout }) {
       <main className="board-main">
         <div className="post-section">
           <div className="post-card">
-            <h2 className="post-title">Share an Article</h2>
+            <h2 className="post-title">Post an Article</h2>
             {error && (
               <div className="error-message">
                 <span className="error-icon">⚠️</span>
@@ -139,7 +144,7 @@ function ArticleBoard({ user, token, onLogout }) {
               <div className="input-wrapper">
                 <input
                   type="text"
-                  placeholder="Paste article URL here..."
+                  placeholder="Enter article text..."
                   value={articleUrl}
                   onChange={(e) => setArticleUrl(e.target.value)}
                   className="post-input"
@@ -212,14 +217,9 @@ function ArticleBoard({ user, token, onLogout }) {
                     )}
                   </div>
                   <div className="article-content">
-                    <a
-                      href={article.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="article-link"
-                    >
+                    <div className="article-text">
                       {article.url}
-                    </a>
+                    </div>
                   </div>
                 </div>
               ))}
